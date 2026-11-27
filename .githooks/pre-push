@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Recusa o push de uma branch com o nome fora do padrão (CLAUDE.md).
+# Ligar uma vez por clone: git config core.hooksPath .githooks
+raiz="$(git rev-parse --show-toplevel)"
+while read -r _ sha_local ref_remota _; do
+  # Apagar uma branch remota e enviar tags não entram na regra.
+  [[ "$sha_local" =~ ^0+$ ]] && continue
+  case "$ref_remota" in
+    refs/heads/*) "$raiz/tools/regras.sh" branch "${ref_remota#refs/heads/}" || exit 1 ;;
+  esac
+done
+exit 0

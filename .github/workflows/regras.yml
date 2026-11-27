@@ -1,0 +1,48 @@
+# Confere, em cada Pull Request, as regras de CLAUDE.md: o nome da branch, a
+# branch de destino e a mensagem de cada commit. Para o merge ser barrado
+# quando falhar, marque esta verificação como obrigatória na proteção das
+# branches (ver README, "Depois de criar o repositório").
+name: Regras do projeto
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  regras:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Testes das regras
+        run: tools/testar-regras.sh
+
+      - name: Nome e destino da branch
+        env:
+          ORIGEM: ${{ github.head_ref }}
+          DESTINO: ${{ github.base_ref }}
+        run: tools/regras.sh pr "$ORIGEM" "$DESTINO"
+
+      - name: Mensagens dos commits
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          TOPO: ${{ github.event.pull_request.head.sha }}
+        run: |
+          falhas=0
+          for sha in $(git rev-list --no-merges "$BASE..$TOPO"); do
+            primeira="$(git log -1 --format=%s "$sha")"
+            inteira="$(git log -1 --format=%B "$sha")"
+            if ! tools/regras.sh mensagem "$primeira" "$inteira"; then
+              echo "  commit: $sha"
+              falhas=$((falhas + 1))
+            fi
+          done
+          if [ "$falhas" -ne 0 ]; then
+            echo "$falhas commit(s) fora do padrão"
+            exit 1
+          fi

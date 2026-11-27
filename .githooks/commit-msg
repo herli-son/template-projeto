@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Recusa o commit com a mensagem fora do padrão (CLAUDE.md).
+# Ligar uma vez por clone: git config core.hooksPath .githooks
+exec "$(git rev-parse --show-toplevel)/tools/regras.sh" commit "$1"
