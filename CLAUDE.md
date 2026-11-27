@@ -2,12 +2,12 @@
 
 ## Padrão de commits (obrigatório)
 
-Todo commit deste repositório segue o padrão abaixo, baseado em Conventional Commits. Ele foi adaptado do padrão do time (Azure Boards) para o GitHub: o prefixo `AB#n` virou `#n`, onde `n` é o número da issue no GitHub.
+Todo commit deste repositório segue o padrão abaixo, baseado em Conventional Commits. O prefixo `AB#n` liga o commit ao work item `n` do Azure Boards (é a sintaxe da integração do Azure Boards com o GitHub).
 
 ### Estrutura
 
 ```text
-!#activity - ?activity_type - !type(?scope): !subject
+!AB#activity - ?activity_type - !type(?scope): !subject
 
 <?body>
 
@@ -15,21 +15,21 @@ Todo commit deste repositório segue o padrão abaixo, baseado em Conventional C
 ```
 
 - `!` = obrigatório; `?` = opcional.
-- `#activity`: número da issue principal do commit (normalmente uma Feature ou um Bug). Obrigatório. O GitHub só cria o vínculo depois do `push`.
-- `activity_type`: tipo da issue principal, por exemplo `Feature` ou `Bug`. Opcional.
+- `AB#activity`: número do work item principal do commit no Azure Boards (normalmente uma Feature ou um Bug). Obrigatório. O vínculo só é criado depois do `push`.
+- `activity_type`: tipo do work item principal, por exemplo `Feature` ou `Bug`. Opcional.
 - `type`: obrigatório, um só por commit (lista abaixo).
 - `scope`: opcional, recomendado quando ajuda a dizer onde a mudança aconteceu. Vários escopos podem ser separados por `/`, `\` ou `,`.
 - `subject`: obrigatório, breve, claro e **no imperativo** (teste: "Se aplicado, este commit vai [subject]").
 
 ### Atividades extras
 
-Uma única atividade principal na primeira linha. Atividades adicionais vão abaixo da mensagem principal, no corpo ou no rodapé, uma por linha, no formato `#n`. Elas não substituem a principal.
+Uma única atividade principal na primeira linha. Atividades adicionais vão abaixo da mensagem principal, no corpo ou no rodapé, uma por linha, no formato `AB#n`. Elas não substituem a principal.
 
 ```text
-#12 - Feature - feat(pedidos): adicionar cálculo do frete
+AB#12 - Feature - feat(pedidos): adicionar cálculo do frete
 
-#15
-#18
+AB#15
+AB#18
 ```
 
 ### Tipos
@@ -52,34 +52,34 @@ O tipo `promote` (CherryFlow) não se aplica a este projeto.
 ### Exemplos
 
 ```bash
-git commit -m "#1 - Feature - docs: adicionar README do projeto"
-git commit -m "#7 - Feature - feat(pedidos): implementar cancelamento"
-git commit -m "#9 - Bug - fix(pagamento): corrigir arredondamento do total"
-git commit -m "#10 - test(pedidos): adicionar testes de cancelamento"
+git commit -m "AB#1 - Feature - docs: adicionar README do projeto"
+git commit -m "AB#7 - Feature - feat(pedidos): implementar cancelamento"
+git commit -m "AB#9 - Bug - fix(pagamento): corrigir arredondamento do total"
+git commit -m "AB#10 - test(pedidos): adicionar testes de cancelamento"
 ```
 
 ### Número da feature no commit
 
-Todo commit precisa identificar a feature a que pertence. Se a atividade principal não for a própria feature (por exemplo, uma User Story ou um Bug), inclua o número da feature no fim da mensagem, no rodapé, no formato `Feature: #n`.
+Todo commit precisa identificar a feature a que pertence. Se a atividade principal não for a própria feature (por exemplo, uma User Story ou um Bug), inclua o número da feature no fim da mensagem, no rodapé, no formato `Feature: AB#n`.
 
 ```text
-#23 - feat(pagamento): adicionar pagamento por boleto
+AB#23 - feat(pagamento): adicionar pagamento por boleto
 
-Feature: #12
+Feature: AB#12
 ```
 
 ### Regras práticas
 
 - Um `type` por commit; se estiver difícil escolher um, o commit está grande demais e deve ser dividido.
-- `#activity` e `type` são obrigatórios.
+- `AB#activity` e `type` são obrigatórios.
 - Prefira commits pequenos e com responsabilidade única.
 - Linhas de atribuição exigidas pela ferramenta (por exemplo `Co-Authored-By`) vão no rodapé e não alteram a primeira linha.
 
 ### Checklist antes de commitar
 
 - [ ] O `type` está correto.
-- [ ] O `#activity` foi informado corretamente.
-- [ ] Atividades extras estão abaixo da mensagem principal, no formato `#n`.
+- [ ] O `AB#activity` foi informado corretamente.
+- [ ] Atividades extras estão abaixo da mensagem principal, no formato `AB#n`.
 - [ ] O `subject` está no imperativo.
 - [ ] A mensagem descreve uma única intenção.
 - [ ] O `scope` foi adicionado quando ajuda a dar contexto.
@@ -120,11 +120,13 @@ Regras:
 - Os achados da revisão são corrigidos antes de abrir o PR.
 - Cada commit da branch precisa passar nos testes sozinho.
 
-## Publicação e fechamento de issues
+## Publicação e fechamento dos work items
 
-- Quando uma issue fica pronta (pelo merge de uma Feature ou de um bugfix na `develop`, ou de um bugfix numa beta), ela **continua aberta** e recebe a etiqueta `aguardando publicação`.
-- As issues com essa etiqueta só fecham quando o código chega na `main`, ou seja, numa versão publicada: o PR da beta para a `main` traz uma linha `Closes #n` para cada issue com a etiqueta cujo código está na beta (inclusive os bugs corrigidos nela), e o GitHub as fecha no merge.
-- PRs para branches de Feature, para a `develop` ou para uma beta não fecham issues.
+- Quando um work item fica pronto (pelo merge de uma Feature ou de um bugfix na `develop`, ou de um bugfix numa beta), ele **continua aberto** no Azure Boards e recebe a tag `aguardando publicação`.
+- Os work items com essa tag só fecham quando o código chega na `main`, ou seja, numa versão publicada: o PR da beta para a `main` traz uma linha `Fixes AB#n` para cada work item com a tag cujo código está na beta (inclusive os bugs corrigidos nela), e a integração do Azure Boards muda o estado deles no merge.
+- `Fixes AB#n` leva o work item a **Resolved** nos processos que têm esse estado (Agile e CMMI) e ao estado final nos que não têm. Para fechar direto, use o nome do estado no lugar de `Fixes`, por exemplo `Closed AB#n` (ou `Done AB#n` no Scrum).
+- A mudança de estado só acontece em PR mesclado na **branch padrão** do repositório: a `main` precisa ser a branch padrão no GitHub.
+- PRs para branches de Feature, para a `develop` ou para uma beta não fecham work items: neles o `AB#n` aparece sem `Fixes`.
 
 ## Verificação automática
 

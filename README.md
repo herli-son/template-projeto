@@ -2,10 +2,10 @@
 
 Ponto de partida para um repositório novo, já com as regras de trabalho e a verificação automática delas:
 
-- **Padrão de commits** baseado em Conventional Commits, com o número da issue na frente.
+- **Padrão de commits** baseado em Conventional Commits, com o work item do Azure Boards na frente (`AB#n`).
 - **Git flow** com `main`, `develop`, betas, Features, User Stories, hotfix e bugfix.
 - **Revisão de código antes de todo Pull Request.**
-- **Issues só fecham quando o código chega na `main`.**
+- **Work items só fecham quando o código chega na `main`.**
 
 O texto completo das regras está em [`CLAUDE.md`](CLAUDE.md). O arquivo tem esse nome para o Claude Code lê-lo sozinho ao trabalhar no repositório; para pessoas, é o guia de contribuição.
 
@@ -14,12 +14,14 @@ O texto completo das regras está em [`CLAUDE.md`](CLAUDE.md). O arquivo tem ess
 **Commit:**
 
 ```text
-#<n da issue> - <tipo da issue, opcional> - <type>(<scope, opcional>): <subject no imperativo>
+AB#<n do work item> - <tipo do work item, opcional> - <type>(<scope, opcional>): <subject no imperativo>
 
 <corpo, opcional>
 
-Feature: #<n da feature>
+Feature: AB#<n da feature>
 ```
+
+O `n` é o número do work item no Azure Boards; os nomes de branch usam o mesmo número.
 
 Types: `feat`, `fix`, `refactor`, `style`, `test`, `docs`, `build`, `perf`, `ci`, `revert`. Um só por commit.
 
@@ -47,8 +49,8 @@ Toda integração entre branches é por Pull Request.
 | `.githooks/commit-msg`, `.githooks/pre-push` | Recusam o commit e o push fora do padrão, na sua máquina. |
 | `.github/workflows/regras.yml` | Confere o mesmo em cada Pull Request. |
 | `.github/pull_request_template.md` | Modelo de Pull Request. |
-| `.github/ISSUE_TEMPLATE/` | Modelos de Feature, User Story e Bug. |
-| `tools/criar-etiquetas.sh` | Cria as etiquetas que as regras usam. |
+| `.github/ISSUE_TEMPLATE/` | Modelos de issue do GitHub (Feature, User Story e Bug), de antes do Azure Boards. Não combinam mais com as regras, que pedem `AB#n`: veja "Sobras do GitHub Issues". |
+| `tools/criar-etiquetas.sh` | Cria as etiquetas das issues do GitHub. Também é sobra: no Azure Boards, `aguardando publicação` é uma tag do work item. |
 
 ## Como usar
 
@@ -63,14 +65,15 @@ Toda integração entre branches é por Pull Request.
 
 ## Depois de criar o repositório
 
-O GitHub não copia etiquetas nem proteção de branch de um template. Faça uma vez:
+O GitHub não copia a proteção de branch nem as integrações de um template. Faça uma vez:
 
-1. **Etiquetas:** `tools/criar-etiquetas.sh` (precisa do [`gh`](https://cli.github.com/) autenticado).
-2. **Proteção da `main` e da `develop`** (Settings > Branches, ou Rules > Rulesets):
+1. **Azure Boards:** ligue o repositório ao projeto do Azure DevOps (aplicativo Azure Boards do GitHub), para o `AB#n` dos commits e dos PRs criar o vínculo com o work item.
+2. **Branch padrão:** deixe a `main` como branch padrão. O `Fixes AB#n` só muda o estado do work item em PR mesclado na branch padrão.
+3. **Proteção da `main` e da `develop`** (Settings > Branches, ou Rules > Rulesets):
    - exigir Pull Request antes do merge;
    - exigir a verificação **Regras do projeto / regras**;
    - impedir que as duas sejam apagadas.
-3. **Apagar a branch depois do merge:** Settings > General > *Automatically delete head branches*. As regras pedem que as branches de User Story, Feature, hotfix e bugfix sejam apagadas depois do merge.
+4. **Apagar a branch depois do merge:** Settings > General > *Automatically delete head branches*. As regras pedem que as branches de User Story, Feature, hotfix e bugfix sejam apagadas depois do merge.
 
 ## O que a verificação automática cobre
 
@@ -78,7 +81,11 @@ O GitHub não copia etiquetas nem proteção de branch de um template. Faça uma
 - O nome da branch.
 - A branch de destino do Pull Request: por exemplo, `feature/user/23-12` só pode ir para `feature/12`, e a `main` só recebe beta ou hotfix.
 
-Não cobre, e fica com as pessoas: o `subject` no imperativo, um commit por intenção, a revisão antes do PR e as etiquetas das issues. Falta do rodapé `Feature: #n` gera só um aviso.
+Não cobre, e fica com as pessoas: o `subject` no imperativo, um commit por intenção, a revisão antes do PR e as tags dos work items. Falta do rodapé `Feature: AB#n` gera só um aviso.
+
+## Sobras do GitHub Issues
+
+O template nasceu com as issues do GitHub e passou a usar o Azure Boards. Os modelos de `.github/ISSUE_TEMPLATE/` e o `tools/criar-etiquetas.sh` ficaram, mas não servem mais às regras: a verificação recusa `#n`, e os modelos falam em "n desta issue" para o nome da branch. Apague-os se o projeto usar só o Azure Boards.
 
 ## Mudar as regras
 
