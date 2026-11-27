@@ -13,8 +13,8 @@
 set -u
 
 TIPOS='feat|fix|refactor|style|test|docs|build|perf|ci|revert'
-# !#atividade - ?tipo da atividade - !type(?scope): !subject
-LINHA="^#[0-9]+ - ([^:()-]+ - )?(${TIPOS})(\([^()]+\))?: [^ ].*$"
+# !AB#atividade - ?tipo da atividade - !type(?scope): !subject
+LINHA="^AB#[0-9]+ - ([^:()-]+ - )?(${TIPOS})(\([^()]+\))?: [^ ].*$"
 
 falha() {
   echo "regra quebrada: $1" >&2
@@ -33,13 +33,13 @@ mensagem() {
   if ! [[ "$primeira" =~ $LINHA ]]; then
     falha "a primeira linha do commit está fora do padrão" \
       "veio:     $primeira" \
-      "esperado: #<n da issue> - <tipo da issue, opcional> - <type>(<scope, opcional>): <subject>" \
-      "exemplo:  #12 - Feature - feat(pedidos): adicionar cálculo do frete" \
+      "esperado: AB#<n do work item> - <tipo do work item, opcional> - <type>(<scope, opcional>): <subject>" \
+      "exemplo:  AB#12 - Feature - feat(pedidos): adicionar cálculo do frete" \
       "types:    ${TIPOS//|/, }"
   fi
   # Todo commit identifica a Feature: na primeira linha, ou no rodapé.
-  if ! [[ "$primeira" =~ ^#[0-9]+\ -\ Feature\ -\  ]] && ! grep -Eq '^Feature: #[0-9]+$' <<<"$inteira"; then
-    echo "aviso: o commit não diz a qual Feature pertence (rodapé \"Feature: #n\")." >&2
+  if ! [[ "$primeira" =~ ^AB#[0-9]+\ -\ Feature\ -\  ]] && ! grep -Eq '^Feature: AB#[0-9]+[[:space:]]*$' <<<"$inteira"; then
+    echo "aviso: o commit não diz a qual Feature pertence (rodapé \"Feature: AB#n\")." >&2
   fi
   return 0
 }
@@ -95,8 +95,11 @@ pr() {
 case "${1:-}" in
   commit)
     [[ -f "${2:-}" ]] || falha "arquivo da mensagem não encontrado: ${2:-}"
-    # Sem as linhas de comentário que o git põe no editor.
-    inteira="$(grep -v '^#[^0-9]' "$2" | grep -v '^#$' || true)"
+    # Sem o que o git põe no editor: tudo a partir da linha de tesoura (o
+    # diff de "git commit -v") e as linhas de comentário ("# ..." ou "#"
+    # sozinho). Uma linha como "#12 - feat: ..." não é comentário: fica, para
+    # ser recusada com o que a pessoa escreveu.
+    inteira="$(sed '/^# -\{2,\} >8 -\{2,\}/,$d' "$2" | grep -Ev '^#( |$)' || true)"
     primeira="$(sed -n '/[^[:space:]]/{p;q;}' <<<"$inteira")"
     mensagem "$primeira" "$inteira"
     ;;
